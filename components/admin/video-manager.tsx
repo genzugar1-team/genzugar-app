@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,14 +22,31 @@ import type { VideoType } from "@/lib/types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
 
-interface VideoManagerProps {
-  videos: VideoType[]
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
 }
 
-function extractYouTubeId(url: string): string | null {
+// Utility functions moved outside component
+const extractYouTubeId = (url: string): string | null => {
   if (!url) return null
 
-  const patterns = [/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/, /^([a-zA-Z0-9_-]{11})$/]
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ]
 
   for (const pattern of patterns) {
     const match = url.match(pattern)
@@ -40,7 +56,7 @@ function extractYouTubeId(url: string): string | null {
   return null
 }
 
-function getYouTubeThumbnail(videoId: string, quality: "maxres" | "hq" | "mq" | "sd" = "maxres"): string {
+const getYouTubeThumbnail = (videoId: string, quality: "maxres" | "hq" | "mq" | "sd" = "maxres"): string => {
   const qualityMap = {
     maxres: "maxresdefault",
     hq: "hqdefault",
@@ -50,158 +66,55 @@ function getYouTubeThumbnail(videoId: string, quality: "maxres" | "hq" | "mq" | 
   return `https://img.youtube.com/vi/${videoId}/${qualityMap[quality]}.jpg`
 }
 
-export function VideoManager({ videos }: VideoManagerProps) {
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [editingVideo, setEditingVideo] = useState<VideoType | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [useAutoThumbnail, setUseAutoThumbnail] = useState(true)
-  const [thumbnailPreview, setThumbnailPreview] = useState<string>("")
-  const [youtubeError, setYoutubeError] = useState<string>("")
+interface VideoFormState {
+  title: string
+  description: string
+  youtube_url: string
+  thumbnail_url: string
+  category: string
+}
 
-  const router = useRouter()
-  const supabase = createClient()
+const initialFormState: VideoFormState = {
+  title: "",
+  description: "",
+  youtube_url: "",
+  thumbnail_url: "",
+  category: "",
+}
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    youtube_url: "",
-    thumbnail_url: "",
-    category: "",
-  })
+interface VideoManagerProps {
+  videos: VideoType[]
+}
 
-  useEffect(() => {
-    if (formData.youtube_url && useAutoThumbnail) {
-      const videoId = extractYouTubeId(formData.youtube_url)
-      if (videoId) {
-        const autoThumbnail = getYouTubeThumbnail(videoId, "maxres")
-        setThumbnailPreview(autoThumbnail)
-        setFormData((prev) => ({ ...prev, thumbnail_url: autoThumbnail }))
-        setYoutubeError("")
-      } else {
-        setYoutubeError("URL YouTube tidak valid. Gunakan format: https://www.youtube.com/watch?v=...")
-        setThumbnailPreview("")
-      }
-    } else if (formData.thumbnail_url && !useAutoThumbnail) {
-      setThumbnailPreview(formData.thumbnail_url)
-    }
-  }, [formData.youtube_url, formData.thumbnail_url, useAutoThumbnail])
+// KOMPONEN FORM DIPISAHKAN DI LUAR - INI KUNCI SOLUSINYA
+interface VideoFormProps {
+  formData: VideoFormState
+  onFieldChange: (field: keyof VideoFormState, value: string) => void
+  onSubmit: (e: React.FormEvent) => void
+  onCancel: () => void
+  isLoading: boolean
+  isEdit: boolean
+  useAutoThumbnail: boolean
+  onAutoThumbnailChange: (checked: boolean) => void
+  thumbnailPreview: string
+  youtubeError: string
+  onThumbnailError: () => void
+}
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      youtube_url: "",
-      thumbnail_url: "",
-      category: "",
-    })
-    setEditingVideo(null)
-    setUseAutoThumbnail(true)
-    setThumbnailPreview("")
-    setYoutubeError("")
-  }
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const videoId = extractYouTubeId(formData.youtube_url)
-    if (!videoId) {
-      setYoutubeError("URL YouTube tidak valid")
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.from("educational_videos").insert([formData])
-
-      if (error) throw error
-
-      const { mutate } = await import("swr")
-      mutate("recent-videos")
-      mutate("all-videos")
-
-      setIsAddOpen(false)
-      resetForm()
-      router.refresh()
-    } catch (error) {
-      console.error("Error adding video:", error)
-      alert("Gagal menambahkan video")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingVideo) return
-
-    const videoId = extractYouTubeId(formData.youtube_url)
-    if (!videoId) {
-      setYoutubeError("URL YouTube tidak valid")
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.from("educational_videos").update(formData).eq("id", editingVideo.id)
-
-      if (error) throw error
-
-      const { mutate } = await import("swr")
-      mutate("recent-videos")
-      mutate("all-videos")
-
-      setEditingVideo(null)
-      resetForm()
-      router.refresh()
-    } catch (error) {
-      console.error("Error updating video:", error)
-      alert("Gagal mengupdate video")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Yakin ingin menghapus video ini?")) return
-
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.from("educational_videos").delete().eq("id", id)
-
-      if (error) throw error
-
-      const { mutate } = await import("swr")
-      mutate("recent-videos")
-      mutate("all-videos")
-
-      router.refresh()
-    } catch (error) {
-      console.error("Error deleting video:", error)
-      alert("Gagal menghapus video")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const openEditDialog = (video: VideoType) => {
-    setEditingVideo(video)
-    setFormData({
-      title: video.title,
-      description: video.description || "",
-      youtube_url: video.youtube_url,
-      thumbnail_url: video.thumbnail_url || "",
-      category: video.category || "",
-    })
-    const videoId = extractYouTubeId(video.youtube_url)
-    const autoThumbnail = videoId ? getYouTubeThumbnail(videoId, "maxres") : ""
-    setUseAutoThumbnail(video.thumbnail_url === autoThumbnail || !video.thumbnail_url)
-    setThumbnailPreview(video.thumbnail_url || "")
-  }
-
-  const VideoForm = ({ onSubmit, isEdit = false }: { onSubmit: (e: React.FormEvent) => void; isEdit?: boolean }) => (
+function VideoFormComponent({
+  formData,
+  onFieldChange,
+  onSubmit,
+  onCancel,
+  isLoading,
+  isEdit,
+  useAutoThumbnail,
+  onAutoThumbnailChange,
+  thumbnailPreview,
+  youtubeError,
+  onThumbnailError
+}: VideoFormProps) {
+  return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor={isEdit ? "edit-title" : "title"} className="text-base">
@@ -210,7 +123,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
         <Input
           id={isEdit ? "edit-title" : "title"}
           value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          onChange={(e) => onFieldChange("title", e.target.value)}
           required
           className="text-base"
           placeholder="Masukkan judul video"
@@ -226,7 +139,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
           id={isEdit ? "edit-youtube_url" : "youtube_url"}
           type="url"
           value={formData.youtube_url}
-          onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+          onChange={(e) => onFieldChange("youtube_url", e.target.value)}
           placeholder="https://www.youtube.com/watch?v=..."
           required
           className="text-base"
@@ -243,10 +156,14 @@ export function VideoManager({ videos }: VideoManagerProps) {
         <div className="flex items-center justify-between">
           <Label className="text-base">Thumbnail</Label>
           <div className="flex items-center gap-2">
-            <Label htmlFor="auto-thumbnail" className="text-sm text-muted-foreground cursor-pointer">
+            <Label htmlFor={isEdit ? "edit-auto-thumbnail" : "auto-thumbnail"} className="text-sm text-muted-foreground cursor-pointer">
               {useAutoThumbnail ? "Otomatis dari YouTube" : "Manual"}
             </Label>
-            <Switch id="auto-thumbnail" checked={useAutoThumbnail} onCheckedChange={setUseAutoThumbnail} />
+            <Switch 
+              id={isEdit ? "edit-auto-thumbnail" : "auto-thumbnail"}
+              checked={useAutoThumbnail} 
+              onCheckedChange={onAutoThumbnailChange}
+            />
           </div>
         </div>
 
@@ -255,7 +172,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
             id={isEdit ? "edit-thumbnail_url" : "thumbnail_url"}
             type="url"
             value={formData.thumbnail_url}
-            onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+            onChange={(e) => onFieldChange("thumbnail_url", e.target.value)}
             placeholder="https://... (URL thumbnail custom)"
             className="text-base"
           />
@@ -264,10 +181,10 @@ export function VideoManager({ videos }: VideoManagerProps) {
         {thumbnailPreview && (
           <div className="rounded-lg border-2 border-dashed border-gray-300 p-2">
             <img
-              src={thumbnailPreview || "/placeholder.svg"}
+              src={thumbnailPreview}
               alt="Preview thumbnail"
               className="w-full h-48 object-cover rounded-lg"
-              onError={() => setThumbnailPreview("")}
+              onError={onThumbnailError}
             />
             <p className="text-xs text-center text-muted-foreground mt-2">Preview Thumbnail</p>
           </div>
@@ -281,7 +198,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
         <Textarea
           id={isEdit ? "edit-description" : "description"}
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => onFieldChange("description", e.target.value)}
           rows={3}
           className="text-base"
           placeholder="Jelaskan isi video..."
@@ -295,7 +212,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
         <Input
           id={isEdit ? "edit-category" : "category"}
           value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          onChange={(e) => onFieldChange("category", e.target.value)}
           placeholder="mis. Nutrisi, Olahraga, Pencegahan"
           className="text-base"
         />
@@ -305,7 +222,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => (isEdit ? resetForm() : setIsAddOpen(false))}
+          onClick={onCancel}
           disabled={isLoading}
         >
           Batal
@@ -316,6 +233,153 @@ export function VideoManager({ videos }: VideoManagerProps) {
       </div>
     </form>
   )
+}
+
+export function VideoManager({ videos }: VideoManagerProps) {
+  const router = useRouter()
+  const supabase = createClient()
+
+  // Form and UI State
+  const [formData, setFormData] = useState<VideoFormState>(initialFormState)
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [editingVideo, setEditingVideo] = useState<VideoType | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [useAutoThumbnail, setUseAutoThumbnail] = useState(true)
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>("")
+  const [youtubeError, setYoutubeError] = useState<string>("")
+
+  // Debounce YouTube URL changes
+  const debouncedYoutubeUrl = useDebounce(formData.youtube_url, 500)
+
+  // Handler yang stabil dengan useCallback
+  const handleFieldChange = useCallback((field: keyof VideoFormState, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }, [])
+
+  const handleAutoThumbnailChange = useCallback((checked: boolean) => {
+    setUseAutoThumbnail(checked)
+  }, [])
+
+  const handleThumbnailError = useCallback(() => {
+    setThumbnailPreview("")
+  }, [])
+
+  // YouTube URL validation effect
+  useEffect(() => {
+    if (debouncedYoutubeUrl && useAutoThumbnail) {
+      const videoId = extractYouTubeId(debouncedYoutubeUrl)
+      if (videoId) {
+        const autoThumbnail = getYouTubeThumbnail(videoId, "maxres")
+        setThumbnailPreview(autoThumbnail)
+        setFormData(prev => ({ ...prev, thumbnail_url: autoThumbnail }))
+        setYoutubeError("")
+      } else if (debouncedYoutubeUrl.length > 5) {
+        setYoutubeError("URL YouTube tidak valid. Gunakan format: https://www.youtube.com/watch?v=...")
+        setThumbnailPreview("")
+      }
+    }
+  }, [debouncedYoutubeUrl, useAutoThumbnail])
+
+  // Custom thumbnail preview effect
+  useEffect(() => {
+    if (!useAutoThumbnail && formData.thumbnail_url) {
+      setThumbnailPreview(formData.thumbnail_url)
+    }
+  }, [formData.thumbnail_url, useAutoThumbnail])
+
+  const resetForm = useCallback(() => {
+    setFormData(initialFormState)
+    setEditingVideo(null)
+    setUseAutoThumbnail(true)
+    setThumbnailPreview("")
+    setYoutubeError("")
+  }, [])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const videoId = extractYouTubeId(formData.youtube_url)
+    if (!videoId) {
+      setYoutubeError("URL YouTube tidak valid")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      if (editingVideo) {
+        const { error } = await supabase
+          .from("educational_videos")
+          .update(formData)
+          .eq("id", editingVideo.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from("educational_videos")
+          .insert([formData])
+        if (error) throw error
+      }
+
+      const { mutate } = await import("swr")
+      mutate("recent-videos")
+      mutate("all-videos")
+
+      resetForm()
+      setIsAddOpen(false)
+      router.refresh()
+    } catch (error) {
+      console.error("Error saving video:", error)
+      alert(editingVideo ? "Gagal mengupdate video" : "Gagal menambahkan video")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [formData, editingVideo, supabase, router, resetForm])
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm("Yakin ingin menghapus video ini?")) return
+
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.from("educational_videos").delete().eq("id", id)
+      if (error) throw error
+
+      const { mutate } = await import("swr")
+      mutate("recent-videos")
+      mutate("all-videos")
+
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting video:", error)
+      alert("Gagal menghapus video")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase, router])
+
+  const openEditDialog = useCallback((video: VideoType) => {
+    setEditingVideo(video)
+    setFormData({
+      title: video.title,
+      description: video.description || "",
+      youtube_url: video.youtube_url,
+      thumbnail_url: video.thumbnail_url || "",
+      category: video.category || "",
+    })
+    const videoId = extractYouTubeId(video.youtube_url)
+    const autoThumbnail = videoId ? getYouTubeThumbnail(videoId, "maxres") : ""
+    setUseAutoThumbnail(video.thumbnail_url === autoThumbnail || !video.thumbnail_url)
+    setThumbnailPreview(video.thumbnail_url || "")
+  }, [])
+
+  const handleCancelAdd = useCallback(() => {
+    setIsAddOpen(false)
+    resetForm()
+  }, [resetForm])
+
+  const handleCancelEdit = useCallback(() => {
+    resetForm()
+  }, [resetForm])
 
   return (
     <div className="space-y-6">
@@ -344,7 +408,19 @@ export function VideoManager({ videos }: VideoManagerProps) {
                 Masukkan URL video YouTube dan informasi akan otomatis terisi
               </DialogDescription>
             </DialogHeader>
-            <VideoForm onSubmit={handleAdd} />
+            <VideoFormComponent
+              formData={formData}
+              onFieldChange={handleFieldChange}
+              onSubmit={handleSubmit}
+              onCancel={handleCancelAdd}
+              isLoading={isLoading}
+              isEdit={false}
+              useAutoThumbnail={useAutoThumbnail}
+              onAutoThumbnailChange={handleAutoThumbnailChange}
+              thumbnailPreview={thumbnailPreview}
+              youtubeError={youtubeError}
+              onThumbnailError={handleThumbnailError}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -365,7 +441,7 @@ export function VideoManager({ videos }: VideoManagerProps) {
                   <div className="flex gap-4 flex-1">
                     {video.thumbnail_url && (
                       <img
-                        src={video.thumbnail_url || "/placeholder.svg"}
+                        src={video.thumbnail_url}
                         alt={video.title}
                         className="h-24 w-40 rounded-lg object-cover flex-shrink-0"
                       />
@@ -407,7 +483,19 @@ export function VideoManager({ videos }: VideoManagerProps) {
                             Update informasi video pembelajaran
                           </DialogDescription>
                         </DialogHeader>
-                        <VideoForm onSubmit={handleEdit} isEdit />
+                        <VideoFormComponent
+                          formData={formData}
+                          onFieldChange={handleFieldChange}
+                          onSubmit={handleSubmit}
+                          onCancel={handleCancelEdit}
+                          isLoading={isLoading}
+                          isEdit={true}
+                          useAutoThumbnail={useAutoThumbnail}
+                          onAutoThumbnailChange={handleAutoThumbnailChange}
+                          thumbnailPreview={thumbnailPreview}
+                          youtubeError={youtubeError}
+                          onThumbnailError={handleThumbnailError}
+                        />
                       </DialogContent>
                     </Dialog>
                     <Button
