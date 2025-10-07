@@ -1,0 +1,14 @@
+-- Sample e-books
+insert into public.ebooks (title, description, author, document_url, thumbnail_url, category, estimated_read_minutes, is_published) values
+('Panduan Lengkap Diabetes untuk Remaja', 'Buku panduan komprehensif tentang diabetes yang ditulis khusus untuk remaja. Membahas penyebab, gejala, pencegahan, dan cara hidup sehat dengan diabetes.', 'Dr. Sarah Johnson', '/placeholder.svg?height=400&width=300', '/placeholder.svg?height=400&width=300', 'Panduan Umum', 45, true),
+('Nutrisi Sehat untuk Pencegahan Diabetes', 'Artikel lengkap tentang pola makan sehat yang dapat membantu mencegah diabetes tipe 2. Termasuk resep dan tips praktis.', 'Tim Nutrisionis Gen-Zugar', '/placeholder.svg?height=400&width=300', '/placeholder.svg?height=400&width=300', 'Nutrisi', 30, true),
+('Olahraga dan Aktivitas Fisik untuk Diabetes', 'Panduan olahraga yang aman dan efektif untuk remaja dengan diabetes atau yang ingin mencegah diabetes.', 'Coach Michael Chen', '/placeholder.svg?height=400&width=300', '/placeholder.svg?height=400&width=300', 'Olahraga', 25, true),
+('Jurnal: Penelitian Terbaru Diabetes Remaja', 'Kumpulan penelitian terbaru tentang diabetes pada remaja, ditulis dengan bahasa yang mudah dipahami.', 'Tim Riset Gen-Zugar', '/placeholder.svg?height=400&width=300', '/placeholder.svg?height=400&width=300', 'Penelitian', 60, true);
+
+-- Sample educational videos
+insert into public.educational_videos (title, description, youtube_url, thumbnail_url, duration_minutes, category, is_published) values
+('Apa Itu Diabetes? Penjelasan Lengkap untuk Remaja', 'Video animasi yang menjelaskan apa itu diabetes, bagaimana diabetes terjadi, dan mengapa penting untuk dipahami oleh remaja.', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', '/placeholder.svg?height=360&width=640', 15, 'Edukasi Dasar', true),
+('5 Makanan Sehat untuk Mencegah Diabetes', 'Video tutorial tentang makanan sehat yang dapat membantu mencegah diabetes. Termasuk tips belanja dan memasak.', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', '/placeholder.svg?height=360&width=640', 12, 'Nutrisi', true),
+('Olahraga 10 Menit untuk Remaja', 'Video panduan olahraga ringan yang bisa dilakukan di rumah hanya dalam 10 menit. Cocok untuk pemula.', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', '/placeholder.svg?height=360&width=640', 10, 'Olahraga', true),
+('Cerita Inspiratif: Hidup Sehat dengan Diabetes', 'Video inspiratif dari remaja yang berhasil mengelola diabetes dan tetap menjalani hidup yang aktif dan bahagia.', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', '/placeholder.svg?height=360&width=640', 20, 'Motivasi', true),
+('Cara Membaca Label Nutrisi pada Makanan', 'Tutorial praktis tentang cara membaca dan memahami label nutrisi pada kemasan makanan.', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', '/placeholder.svg?height=360&width=640', 8, 'Nutrisi', true);
