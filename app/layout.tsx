@@ -28,7 +28,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Gen-Zugar - Platform Edukasi Diabetes untuk Gen-Z",
   description: "Belajar tentang diabetes dengan cara yang menyenangkan melalui video, game, dan kuis interaktif",
-  generator: "v0.app",
+  
 }
 
 export default function RootLayout({

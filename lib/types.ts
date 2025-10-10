@@ -66,17 +66,18 @@ export interface Glossary {
 }
 
 export interface Ebook {
-  id: string
-  title: string
-  description: string
-  author: string | null
-  document_url: string
-  thumbnail_url: string | null
-  category: string | null
-  estimated_read_minutes: number | null
-  is_published: boolean
-  created_at: string
-  updated_at: string
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  document_url: string;
+  thumbnail_url: string;
+  category: string;
+  estimated_read_minutes?: number;
+  is_published: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface EducationalVideo {

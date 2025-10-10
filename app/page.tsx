@@ -1,139 +1,157 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { BookOpen, Heart, Target, Users } from "lucide-react"
+'use client'
+
+import { Metadata } from "next" 
+import { Heart, BookOpen, Users, Activity, Video, Book } from "lucide-react"
+import { use } from "react";
 
 export default function LandingPage() {
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2">
-            <Heart className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gen-Zugar</h1>
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/gen-zugar-logo.jpeg" 
+              alt="Gen-Zugar Logo" 
+              className="h-10 w-auto md:h-12"
+            />
+            <h1 className="text-lg md:text-xl font-bold text-purple-900">Gen-Zugar</h1>
           </div>
-          <nav className="flex items-center gap-4">
-            <Link href="/auth/login">
-              <Button variant="ghost" size="lg" className="text-base">
-                Masuk
-              </Button>
-            </Link>
-            <Link href="/auth/sign-up">
-              <Button size="lg" className="text-base">
-                Daftar Gratis
-              </Button>
-            </Link>
+          <nav className="flex items-center gap-2">
+            <a 
+              href="/auth/login"
+              className="px-3 md:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              Masuk
+            </a>
+            <a 
+              href="/auth/sign-up"
+              className="px-3 md:px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Daftar
+            </a>
           </nav>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center md:py-24">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-balance text-4xl font-bold leading-tight text-gray-900 dark:text-white md:text-5xl lg:text-6xl">
-            Belajar Tentang Diabetes dengan Cara yang Menyenangkan
+      <section className="container mx-auto px-4 py-12 md:py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-block mb-4 px-3 py-1.5 bg-purple-50 rounded-full text-xs font-semibold text-purple-600 border border-purple-200">
+            Platform Edukasi Diabetes untuk Gen-Z
+          </div>
+          <h2 className="text-3xl font-black leading-tight text-gray-900 md:text-5xl lg:text-6xl mb-6">
+            Belajar Diabetes dengan Cara yang Seru
           </h2>
-          <p className="mt-6 text-pretty text-lg leading-relaxed text-gray-700 dark:text-gray-300 md:text-xl">
-            Platform edukasi interaktif untuk remaja Gen-Z yang ingin memahami diabetes, pencegahan, dan gaya hidup
-            sehat. Belajar melalui video, game, dan kuis yang seru!
+          <p className="text-base md:text-lg leading-relaxed text-gray-600 mb-8">
+            Platform edukasi interaktif untuk remaja yang ingin memahami diabetes, pencegahan, dan gaya hidup sehat. Belajar melalui video, e-book, dan pantau kesehatan kamu!
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/auth/sign-up">
-              <Button size="lg" className="w-full text-lg sm:w-auto">
-                <Users className="mr-2 h-5 w-5" />
-                Mulai Belajar Sekarang
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button variant="outline" size="lg" className="w-full text-lg sm:w-auto bg-transparent">
-                <BookOpen className="mr-2 h-5 w-5" />
-                Lihat Fitur
-              </Button>
-            </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <a 
+              href="/auth/sign-up"
+              className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white text-base font-bold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Users className="h-5 w-5" />
+              Mulai Belajar
+            </a>
+            <button 
+              onClick={scrollToFeatures}
+              className="w-full sm:w-auto px-6 py-3 bg-white text-gray-700 text-base font-semibold rounded-lg border-2 border-gray-300 hover:border-purple-500 hover:text-purple-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <BookOpen className="h-5 w-5" />
+              Lihat Fitur
+            </button>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="bg-white py-16 dark:bg-gray-800">
+      <section id="features" className="bg-gray-50 py-12 md:py-20">
         <div className="container mx-auto px-4">
-          <h3 className="text-balance text-center text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
-            Kenapa Pilih Gen-Zugar?
-          </h3>
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-2 transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-                  <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-300" />
-                </div>
-                <h4 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Materi Lengkap</h4>
-                <p className="leading-relaxed text-gray-700 dark:text-gray-300">
-                  E-book, video, dan artikel yang mudah dipahami tentang diabetes dan pencegahannya.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="text-center mb-10 md:mb-16">
+            <h3 className="text-2xl md:text-4xl font-black text-gray-900 mb-3">
+              Kenapa Pilih Gen-Zugar?
+            </h3>
+            <p className="text-base md:text-lg text-gray-600">
+              Semua yang kamu butuhkan untuk belajar tentang diabetes
+            </p>
+          </div>
+          
+          <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+            {/* Feature 1 */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500">
+                <BookOpen className="h-7 w-7 text-white" />
+              </div>
+              <h4 className="mb-2 text-lg font-bold text-gray-900">Materi Lengkap</h4>
+              <p className="text-sm leading-relaxed text-gray-600">
+                E-book, video, dan artikel yang mudah dipahami tentang diabetes dan pencegahannya.
+              </p>
+            </div>
 
-            <Card className="border-2 transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                  <Target className="h-6 w-6 text-green-600 dark:text-green-300" />
-                </div>
-                <h4 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Game Interaktif</h4>
-                <p className="leading-relaxed text-gray-700 dark:text-gray-300">
-                  Belajar sambil bermain dengan game edukatif yang seru dan menantang.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Feature 2 */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-purple-500 hover:shadow-lg transition-all">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-purple-500">
+                <Activity className="h-7 w-7 text-white" />
+              </div>
+              <h4 className="mb-2 text-lg font-bold text-gray-900">Pantau BMI</h4>
+              <p className="text-sm leading-relaxed text-gray-600">
+                Pantau BMI diri dengan tepat dan dapatkan insight kesehatan yang personal.
+              </p>
+            </div>
 
-            <Card className="border-2 transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
-                  <Heart className="h-6 w-6 text-purple-600 dark:text-purple-300" />
-                </div>
-                <h4 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Kalkulator BMI</h4>
-                <p className="leading-relaxed text-gray-700 dark:text-gray-300">
-                  Pantau kesehatan kamu dengan kalkulator BMI dan riwayat pengukuran.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Feature 3 */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-pink-500 hover:shadow-lg transition-all">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-pink-500">
+                <Book className="h-7 w-7 text-white" />
+              </div>
+              <h4 className="mb-2 text-lg font-bold text-gray-900">E-books Kesehatan</h4>
+              <p className="text-sm leading-relaxed text-gray-600">
+                Informasi dan pengetahuan kesehatan dari e-books yang mudah diakses kapan saja.
+              </p>
+            </div>
 
-            <Card className="border-2 transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900">
-                  <Users className="h-6 w-6 text-orange-600 dark:text-orange-300" />
-                </div>
-                <h4 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Tracking Progress</h4>
-                <p className="leading-relaxed text-gray-700 dark:text-gray-300">
-                  Lihat perkembangan belajar kamu dan raih semua achievement!
-                </p>
-              </CardContent>
-            </Card>
+            {/* Feature 4 */}
+            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-orange-500 hover:shadow-lg transition-all">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-orange-500">
+                <Video className="h-7 w-7 text-white" />
+              </div>
+              <h4 className="mb-2 text-lg font-bold text-gray-900">Konten Video</h4>
+              <p className="text-sm leading-relaxed text-gray-600">
+                Informasi konten video yang bermanfaat untuk perkembangan kesehatan kamu.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="mx-auto max-w-2xl">
-          <h3 className="text-balance text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+      <section className="container mx-auto px-4 py-12 md:py-20">
+        <div className="mx-auto max-w-2xl bg-purple-600 rounded-2xl p-8 md:p-12 text-center">
+          <h3 className="text-2xl md:text-4xl font-black text-white mb-4">
             Siap Mulai Perjalanan Sehat Kamu?
           </h3>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+          <p className="text-base md:text-lg text-white/90 mb-6">
             Bergabung dengan ribuan remaja lainnya yang sudah belajar tentang diabetes dan gaya hidup sehat.
           </p>
-          <Link href="/auth/sign-up">
-            <Button size="lg" className="mt-6 text-lg">
-              Daftar Sekarang - Gratis!
-            </Button>
-          </Link>
+          <a 
+            href="/auth/sign-up"
+            className="inline-block w-full sm:w-auto px-8 py-3 bg-white text-purple-600 text-base font-bold rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Daftar Sekarang - Gratis!
+          </a>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-gray-50 py-8 dark:bg-gray-900">
-        <div className="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400">
-          <p className="text-base">&copy; 2025 Gen-Zugar. Platform edukasi diabetes untuk Gen-Z.</p>
+      <footer className="border-t border-gray-200 bg-gray-50 py-6">
+        <div className="container mx-auto px-4 text-center text-gray-600">
+          <p className="text-sm">&copy; 2025 Gen-Zugar. Platform edukasi diabetes untuk Gen-Z.</p>
         </div>
       </footer>
     </div>
